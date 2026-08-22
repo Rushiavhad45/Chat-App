@@ -10,7 +10,7 @@ dotenv.config();
 const app = express();
 const __dirname = path.resolve();
 
-const PORT = process.env.PORT || 8000;
+const startingPort = Number(process.env.PORT) || 8000;
 
 
 app.use("/api/auth", authRoutes);
@@ -24,4 +24,18 @@ if(process.env.NODE_ENV === "production") {
     })
 }
  
-app.listen(PORT, () => console.log("Server is running on port : " + PORT))
+function startServer(port) {
+    const server = app.listen(port, () => console.log("Server is running on port : " + port));
+
+    server.on("error", (error) => {
+        if (error.code === "EADDRINUSE") {
+            console.log(`Port ${port} is busy. Trying port ${port + 1}...`);
+            startServer(port + 1);
+            return;
+        }
+
+        throw error;
+    });
+}
+
+startServer(startingPort);
